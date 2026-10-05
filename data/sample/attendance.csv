@@ -1,0 +1,13 @@
+employee_id,name,client,date,hours
+M001,Mbuyi,Acme,2026-10-05,8
+M001,Mbuyi,Acme,2026-10-06,8
+M001,Mbuyi,Acme,2026-10-06,8
+M001,Mbuyi,Acme,2026-10-08,8
+M002,Kalala,Acme,2026-10-05,8
+M003,Tshala,Acme,2026-10-05,8
+M003,Tshala,Beta Corp,2026-10-06,11
+M003,Tshala,Beta Corp,2026-10-07,7
+M004,Ilunga,Acme,2026-10-05,8
+M999,Inconnu,Acme,2026-10-05,8
+M001,Mbuyi,Acme,2026-10-07,-3
+M001,Mbuyi,Acme,not-a-date,8

@@ -1,0 +1,34 @@
+[
+  {
+    "employee_id": "M001",
+    "client": "Acme",
+    "start_date": "2026-09-01",
+    "end_date": "2026-12-31",
+    "status": "active",
+    "max_daily_hours": 10
+  },
+  {
+    "employee_id": "M002",
+    "client": "Acme",
+    "start_date": "2026-09-01",
+    "end_date": "2026-09-30",
+    "status": "active",
+    "max_daily_hours": 10
+  },
+  {
+    "employee_id": "M003",
+    "client": "Beta Corp",
+    "start_date": "2026-09-15",
+    "end_date": "2026-12-31",
+    "status": "active",
+    "max_daily_hours": 8
+  },
+  {
+    "employee_id": "M004",
+    "client": "Acme",
+    "start_date": "2026-09-01",
+    "end_date": "2026-12-31",
+    "status": "terminated",
+    "max_daily_hours": 10
+  }
+]
