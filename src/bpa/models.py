@@ -2,6 +2,7 @@
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from enum import Enum
 import datetime as dt
+from dataclasses import dataclass
 
 class AttendanceRecord(BaseModel):
 
@@ -32,6 +33,18 @@ class Contract(BaseModel):
         if self.end_date and self.end_date < self.start_date:
             raise ValueError("end_date must be after start_date")
         return self
+
+class Severity(str, Enum):
+    BLOCKING = "blocking"  
+    WARNING = "warning"    
+
+@dataclass(frozen=True)
+class RuleViolation:
+
+    rule_code: str
+    severity: Severity
+    record: AttendanceRecord
+    message: str
 
     
         
