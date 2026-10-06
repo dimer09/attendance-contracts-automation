@@ -3,33 +3,15 @@ from pathlib import Path
 
 from bpa.compare import match_records_to_contracts
 from bpa.extract.files import read_attendance_file
-from bpa.models import AttendanceRecord, Contract
+from bpa.models import Contract
 from bpa.validate import validate_attendance_rows
+
+from tests.factories import make_contract, make_record
 
 SAMPLE_DIR = Path(__file__).parent.parent / "data" / "sample"
 
 
-def make_record(**overrides):
-    base = {
-        "employee_id": "M001",
-        "name": "Mbuyi",
-        "client": "Acme",
-        "date": "2026-10-05",
-        "hours": "8",
-    }
-    return AttendanceRecord(**{**base, **overrides})
 
-
-def make_contract(**overrides):
-    base = {
-        "employee_id": "M001",
-        "client": "Acme",
-        "start_date": "2026-09-01",
-        "end_date": "2026-12-31",
-        "status": "active",
-        "max_daily_hours": 10,
-    }
-    return Contract(**{**base, **overrides})
 
 
 def test_record_is_matched_with_its_contract():
