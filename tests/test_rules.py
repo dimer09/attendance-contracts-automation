@@ -109,8 +109,74 @@ def test_sample_data_end_to_end():
         (v.record.employee_id, v.record.date.isoformat(), v.rule_code) for v in violations
     }
     assert found == {
-        ("M002", "2026-10-05", "R2"), 
+        ("M001", "2026-10-06", "R4"),  
+        ("M002", "2026-10-05", "R2"),  
         ("M003", "2026-10-05", "R5"),  
-        ("M004", "2026-10-05", "R2"),  
-        ("M999", "2026-10-05", "R1")
+        ("M003", "2026-10-06", "R3"),  
+        ("M999", "2026-10-05", "R1"),  
     }
+    assert len(violations) == 6 
+
+def run_many(records, contracts):
+    return apply_rules(match_records_to_contracts(records, contracts))
+
+def test_hours_over_limit_is_flagged_r3_as_warning():
+    violations = run(make_record(hours="11"), make_contract(max_daily_hours=8))
+
+    assert codes(violations) == ["R3"]
+    assert violations[0].severity == Severity.WARNING  
+    assert "11" in violations[0].message and "8" in violations[0].message
+
+
+def test_hours_equal_to_limit_are_accepted():
+    assert run(make_record(hours="8"), make_contract(max_daily_hours=8)) == []
+
+
+def test_r3_is_silent_without_applicable_contract():
+    expired = make_contract(end_date="2026-09-30", max_daily_hours=8)
+
+
+    assert codes(run(make_record(hours="20"), expired)) == ["R2"]
+
+
+def test_most_generous_active_contract_applies():
+    strict = make_contract(max_daily_hours=8)
+    generous = make_contract(max_daily_hours=12)
+
+    assert run(make_record(hours="10"), strict, generous) == []
+
+
+def test_limit_of_inactive_contract_is_ignored():
+    expired = make_contract(end_date="2026-09-30", max_daily_hours=12)
+    active = make_contract(start_date="2026-10-01", max_daily_hours=8)
+
+    violations = run(make_record(hours="10", date="2026-10-05"), expired, active)
+
+    assert codes(violations) == ["R3"] 
+
+
+def test_duplicate_lines_are_flagged_r4_on_each_occurrence():
+    violations = run_many([make_record(), make_record()], [make_contract()])
+
+    assert codes(violations) == ["R4", "R4"]
+    assert violations[0].severity == Severity.BLOCKING
+    assert "2 lines" in violations[0].message
+
+
+def test_same_employee_on_different_days_is_not_duplicate():
+    records = [make_record(date="2026-10-05"), make_record(date="2026-10-06")]
+    assert run_many(records, [make_contract()]) == []
+
+
+def test_different_employees_on_same_day_are_not_duplicates():
+    records = [make_record(employee_id="M001"), make_record(employee_id="M002")]
+    contracts = [make_contract(employee_id="M001"), make_contract(employee_id="M002")]
+    assert run_many(records, contracts) == []
+
+
+def test_duplicate_is_flagged_even_without_contract():
+    records = [make_record(employee_id="M999"), make_record(employee_id="M999")]
+
+    violations = run_many(records, [])
+
+    assert codes(violations) == ["R1", "R4", "R1", "R4"]  

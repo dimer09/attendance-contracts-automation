@@ -9,9 +9,12 @@ class RuleSetting:
     severity: Severity = Severity.BLOCKING
 
 
+
 DEFAULT_SETTINGS: dict[str, RuleSetting] = {
     "R1": RuleSetting(),
     "R2": RuleSetting(),
+    "R3": RuleSetting(severity=Severity.WARNING),  
+    "R4": RuleSetting(),
     "R5": RuleSetting(),
 }
 
