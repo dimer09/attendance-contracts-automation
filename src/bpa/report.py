@@ -49,7 +49,7 @@ def _write_header(sheet: Worksheet, headers: list[str], widths: list[int]) -> No
     sheet.freeze_panes = "A2"  
 
 
-def _result_label(blocking: int, warnings: int, rejected_count: int) -> str:
+def result_label(blocking: int, warnings: int, rejected_count: int) -> str:
     if blocking or rejected_count:
         return "ACTION REQUIRED"
     if warnings:
@@ -83,7 +83,7 @@ def _write_summary(
         ("Blocking exceptions", blocking),
         ("Warnings", warnings),
         None,
-        ("Result", _result_label(blocking, warnings, len(rejected))),
+        ("Result", result_label(blocking, warnings, len(rejected))),
     ]
 
     row = 1
