@@ -1,5 +1,7 @@
 import json
 import os
+import runpy
+import sys
 from pathlib import Path
 
 import pytest
@@ -175,3 +177,12 @@ def test_api_key_never_appears_in_output_or_logs(tmp_path, monkeypatch, capsys):
     assert "super-secret-key" not in captured.out
     assert "super-secret-key" not in captured.err
     assert "super-secret-key" not in log_text
+
+def test_module_entry_point_exits_with_the_cli_code(monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", ["bpa"])  
+
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_module("bpa", run_name="__main__")
+
+    assert exit_info.value.code == 1
+    assert "--input" in capsys.readouterr().err

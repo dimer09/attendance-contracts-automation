@@ -86,3 +86,10 @@ def test_sample_file_keeps_invalid_rows():
 
     assert len(rows) == 12
     assert rows[-1]["date"] == "not-a-date"
+
+def test_corrupt_excel_file_is_rejected(tmp_path):
+    path = tmp_path / "attendance.xlsx"
+    path.write_bytes(b"this is not a real Excel file")
+
+    with pytest.raises(FileReaderError, match="Error reading file"):
+        read_attendance_file(path)

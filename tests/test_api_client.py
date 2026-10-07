@@ -119,3 +119,10 @@ def test_api_key_never_appears_in_logs(caplog):
 
     assert "Retrying" in caplog.text                
     assert "super-secret-key" not in caplog.text   
+
+@responses.activate
+def test_contract_that_is_not_an_object_is_rejected():
+    responses.add(responses.GET, URL, json=[CONTRACT, 42], status=200)
+
+    with pytest.raises(ApiError, match="position 1"):
+        fetch_contracts(BASE_URL, "key")
