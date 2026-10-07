@@ -5,6 +5,8 @@ import responses
 from bpa.extract import api_client
 from bpa.extract.api_client import ApiError, fetch_contracts
 
+import logging
+
 BASE_URL = "http://localhost:8000"
 URL = f"{BASE_URL}/contracts"
 
@@ -106,3 +108,14 @@ def test_non_json_response_is_rejected():
 
     with pytest.raises(ApiError, match="JSON"):
         fetch_contracts(BASE_URL, "key")
+
+@responses.activate
+def test_api_key_never_appears_in_logs(caplog):
+    caplog.set_level(logging.WARNING)  
+    responses.add(responses.GET, URL, status=500)
+    responses.add(responses.GET, URL, json=[CONTRACT], status=200)
+
+    fetch_contracts(BASE_URL, "test-key")
+
+    assert "Retrying" in caplog.text                
+    assert "super-secret-key" not in caplog.text   

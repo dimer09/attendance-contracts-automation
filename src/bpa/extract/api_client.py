@@ -52,7 +52,14 @@ def fetch_contracts(base_url: str, api_key: str, *, timeout : float = 5.0, max_a
                 return _parse_contact(response)
             if response.status_code < 500:
                 raise ApiError(f"HTTP {response.status_code}: {response.text}")
+            if response.status_code >= 500:
+                logger.warning(
+                "Retrying request to %s after HTTP %s",
+                url,
+                response.status_code,
+            )
             last_problem= f"server error: HTTP {response.status_code}: {response.text}"
+
 
         if attempt < max_attempts:
             delay = backoff_seconds * (2 ** (attempt - 1))

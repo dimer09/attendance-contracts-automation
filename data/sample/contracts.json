@@ -28,7 +28,7 @@
     "client": "Acme",
     "start_date": "2026-09-01",
     "end_date": "2026-12-31",
-    "status": "terminated",
+    "status": "active",
     "max_daily_hours": 10
   }
 ]

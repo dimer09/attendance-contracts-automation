@@ -27,6 +27,7 @@ class Contract(BaseModel):
     start_date : dt.date
     end_date : dt.date | None = None
     status : ContractStatus
+    max_daily_hours: int
 
     @model_validator(mode="after")
     def check_dates_order(self) -> "Contract":
