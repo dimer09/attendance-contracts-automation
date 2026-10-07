@@ -6,10 +6,11 @@ from typing import NoReturn
 
 from dotenv import load_dotenv
 
-from bpa.config import ConfigError, load_settings
+from bpa.config import ConfigError, SmtpSettings, load_settings, load_smtp_settings
 from bpa.extract.api_client import ApiError
 from bpa.extract.files import FileReaderError
 from bpa.logging_setup import generate_run_id, setup_logging, teardown_logging
+from bpa.notify import NotificationError, build_message, send_notification
 from bpa.pipeline import PipelineResult, run_pipeline
 
 EXIT_OK = 0
@@ -41,6 +42,10 @@ def _build_parser() -> argparse.ArgumentParser:
         "--log-dir", type=Path, default=Path("logs"),
         help="folder for the log file (default: logs)",
     )
+    parser.add_argument(
+        "--notify", action="store_true",
+        help="email the report (needs the BPA_SMTP_* and BPA_MAIL_* variables)",
+    )
     return parser
 
 
@@ -57,10 +62,22 @@ def _print_summary(result: PipelineResult) -> None:
     )
     print(f"Result: {result.verdict}")
 
+def _notify(result: PipelineResult, smtp: SmtpSettings) -> None:
+  
+    try:
+        send_notification(build_message(result, smtp), smtp)
+    except NotificationError as exc:
+      
+        logger.error("Notification failed: %s", exc)
+    else:
+
+        logger.info("Notification sent to %d recipient(s)", len(smtp.recipients))
 
 def _run(args: argparse.Namespace, run_id: str) -> int:
     try:
         settings = load_settings()
+       
+        smtp = load_smtp_settings() if args.notify else None
         result = run_pipeline(
             args.input,
             base_url=settings.api_base_url,
@@ -68,6 +85,8 @@ def _run(args: argparse.Namespace, run_id: str) -> int:
             output_dir=args.output_dir,
             run_id=run_id,
         )
+        if smtp is not None:
+            _notify(result, smtp)
     except (FileReaderError, ConfigError) as exc:
         logger.error("Input problem: %s", exc)
         return EXIT_INPUT_ERROR

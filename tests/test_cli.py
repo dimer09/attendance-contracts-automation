@@ -2,15 +2,17 @@ import json
 import os
 import runpy
 import sys
+import smtplib
 from pathlib import Path
 
 import pytest
 import responses
 
-from bpa import cli
+from bpa import cli, notify
 from bpa.cli import main
 from bpa.extract import api_client
 from bpa.logging_setup import teardown_logging
+from bpa.notify import NotificationError
 
 SAMPLE_DIR = Path(__file__).parent.parent / "data" / "sample"
 ATTENDANCE = SAMPLE_DIR / "attendance.csv"
@@ -40,13 +42,13 @@ def serve_contracts():
     responses.add(responses.GET, CONTRACTS_URL, json=CONTRACTS, status=200)
 
 
-def run_cli(tmp_path, input_path=ATTENDANCE, log_dir=None):
+def run_cli(tmp_path, input_path=ATTENDANCE, log_dir=None, extra_args=()):
     return main([
         "--input", str(input_path),
         "--output-dir", str(tmp_path / "reports"),
         "--log-dir", str(log_dir or tmp_path / "logs"),
+        *extra_args,
     ])
-
 
 @responses.activate
 def test_successful_run_prints_summary_and_exits_0(tmp_path, monkeypatch, capsys):
@@ -186,3 +188,99 @@ def test_module_entry_point_exits_with_the_cli_code(monkeypatch, capsys):
 
     assert exit_info.value.code == 1
     assert "--input" in capsys.readouterr().err
+
+def configure_smtp(monkeypatch, password="smtp-secret"):
+    monkeypatch.setenv("BPA_SMTP_HOST", "smtp.example.com")
+    monkeypatch.setenv("BPA_MAIL_FROM", "bpa@example.com")
+    monkeypatch.setenv("BPA_MAIL_TO", "manager@example.com")
+    monkeypatch.setenv("BPA_SMTP_USER", "bpa-user")
+    monkeypatch.setenv("BPA_SMTP_PASSWORD", password)
+
+
+@responses.activate
+def test_notify_sends_the_report_by_email(tmp_path, monkeypatch, capsys):
+    configure(monkeypatch)
+    configure_smtp(monkeypatch)
+    serve_contracts()
+    sent = []
+    monkeypatch.setattr(cli, "send_notification", lambda message, settings: sent.append(message))
+
+    code = run_cli(tmp_path, extra_args=["--notify"])
+
+    assert code == 0
+    assert len(sent) == 1
+    message = sent[0]
+    assert message["Subject"].startswith("[BPA] ACTION REQUIRED")
+    assert message["To"] == "manager@example.com"
+    attachments = list(message.iter_attachments())
+    assert len(attachments) == 1
+    assert attachments[0].get_filename().startswith("report_")
+    assert "Result: ACTION REQUIRED" in capsys.readouterr().out
+
+
+@responses.activate
+def test_failed_notification_does_not_change_the_exit_code(tmp_path, monkeypatch, capsys):
+    configure(monkeypatch)
+    configure_smtp(monkeypatch)
+    serve_contracts()
+
+    def refuse(message, settings):
+        raise NotificationError("Could not send the email (ConnectionRefusedError: refused)")
+
+    monkeypatch.setattr(cli, "send_notification", refuse)
+
+    code = run_cli(tmp_path, extra_args=["--notify"])
+
+    captured = capsys.readouterr()
+    assert code == 0  
+    assert "Notification failed" in captured.err
+    assert "Result: ACTION REQUIRED" in captured.out
+    assert len(list((tmp_path / "reports").glob("report_*.xlsx"))) == 1
+
+
+@responses.activate
+def test_notify_with_missing_smtp_settings_exits_1_before_any_work(tmp_path, monkeypatch, capsys):
+    configure(monkeypatch)  
+
+    code = run_cli(tmp_path, extra_args=["--notify"])
+
+    assert code == 1
+    assert "BPA_SMTP_HOST" in capsys.readouterr().err
+    assert len(responses.calls) == 0                
+    assert not (tmp_path / "reports").exists()      
+
+
+@responses.activate
+def test_no_email_is_sent_without_the_notify_flag(tmp_path, monkeypatch):
+    configure(monkeypatch)
+    configure_smtp(monkeypatch) 
+    serve_contracts()
+    sent = []
+    monkeypatch.setattr(cli, "send_notification", lambda message, settings: sent.append(message))
+
+    code = run_cli(tmp_path)
+
+    assert code == 0
+    assert sent == []
+
+
+@responses.activate
+def test_smtp_password_never_appears_in_output_or_logs(tmp_path, monkeypatch, capsys):
+    configure(monkeypatch)
+    configure_smtp(monkeypatch, password="super-smtp-secret")
+    serve_contracts()
+
+    def refuse(*args, **kwargs):
+        raise smtplib.SMTPAuthenticationError(535, b"Authentication failed")
+
+    monkeypatch.setattr(notify.smtplib, "SMTP", refuse)  
+
+    code = run_cli(tmp_path, extra_args=["--notify"])
+
+    captured = capsys.readouterr()
+    log_text = (tmp_path / "logs" / "bpa.log").read_text(encoding="utf-8")
+    assert code == 0
+    assert "Notification failed" in log_text  
+    assert "super-smtp-secret" not in captured.out
+    assert "super-smtp-secret" not in captured.err
+    assert "super-smtp-secret" not in log_text
