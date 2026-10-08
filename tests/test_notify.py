@@ -29,7 +29,9 @@ def make_settings(**overrides):
 
 
 def make_violation(rule_code="R1", severity=Severity.BLOCKING, **record_overrides):
-    return RuleViolation(rule_code, severity, make_record(**record_overrides), f"{rule_code} problem")
+    return RuleViolation(
+        rule_code, severity, make_record(**record_overrides), f"{rule_code} problem"
+    )
 
 
 def make_rejected():
@@ -58,7 +60,6 @@ def simple_message():
     message["Subject"] = "test"
     message.set_content("hello")
     return message
-
 
 
 def test_subject_and_body_show_the_verdict_and_counts(tmp_path):
@@ -117,7 +118,7 @@ def test_sender_and_recipients_are_set(tmp_path):
 
 
 def test_oversized_report_is_not_attached(tmp_path, monkeypatch):
-    monkeypatch.setattr(notify, "MAX_ATTACHMENT_BYTES", 5) 
+    monkeypatch.setattr(notify, "MAX_ATTACHMENT_BYTES", 5)
     result = make_result(tmp_path, report_bytes=b"0123456789")
 
     message = build_message(result, make_settings())
@@ -134,20 +135,16 @@ def test_missing_report_file_is_a_notification_error(tmp_path):
         build_message(result, make_settings())
 
 
-
-
 class FakeConnection:
-   
-
     def __init__(self, owner, kind, host, port, timeout, context):
         self.owner = owner
-        self.kind = kind          
+        self.kind = kind
         self.host = host
         self.port = port
         self.timeout = timeout
-        self.context = context      
-        self.tls_context = None    
-        self.events = []           
+        self.context = context
+        self.tls_context = None
+        self.events = []
         self.credentials = None
         self.message = None
 
@@ -155,7 +152,7 @@ class FakeConnection:
         return self
 
     def __exit__(self, *args):
-        return False 
+        return False
 
     def starttls(self, context=None):
         self.events.append("starttls")
@@ -176,9 +173,9 @@ class FakeConnection:
 
 class FakeSmtp:
     def __init__(self):
-        self.opened = []         
-        self.login_error = None  
-        self.send_error = None   
+        self.opened = []
+        self.login_error = None
+        self.send_error = None
 
     def smtp(self, host, port, timeout=None):
         connection = FakeConnection(self, "smtp", host, port, timeout, None)
@@ -208,7 +205,7 @@ def test_starttls_encrypts_before_login_and_checks_the_certificate(fake_smtp):
     assert connection.kind == "smtp"
     assert (connection.host, connection.port) == ("smtp.example.com", 587)
     assert connection.timeout == notify.SMTP_TIMEOUT_SECONDS
-  
+
     assert connection.events == ["starttls", "login", "send"]
     assert connection.credentials == ("bpa-user", "smtp-secret")
     assert connection.tls_context.verify_mode == ssl.CERT_REQUIRED
@@ -221,7 +218,7 @@ def test_ssl_mode_uses_an_encrypted_connection_from_the_start(fake_smtp):
 
     connection = fake_smtp.opened[0]
     assert connection.kind == "ssl"
-    assert connection.events == ["login", "send"]  
+    assert connection.events == ["login", "send"]
     assert connection.context.verify_mode == ssl.CERT_REQUIRED
     assert connection.context.check_hostname is True
 
@@ -263,7 +260,7 @@ def test_refused_credentials_become_a_notification_error(fake_smtp):
         send_notification(simple_message(), make_settings())
 
     assert "smtp-secret" not in str(error.value)
-    assert fake_smtp.opened[0].events == ["starttls"] 
+    assert fake_smtp.opened[0].events == ["starttls"]
 
 
 @pytest.mark.parametrize(

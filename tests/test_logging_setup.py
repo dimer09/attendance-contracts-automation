@@ -12,7 +12,7 @@ LOGGER = logging.getLogger("bpa.test")
 @pytest.fixture(autouse=True)
 def clean_logging():
     yield
-    teardown_logging() 
+    teardown_logging()
 
 
 def read_log(tmp_path):
@@ -50,7 +50,7 @@ def test_console_line_contains_run_id_and_message(tmp_path, capsys):
 
     LOGGER.warning("something odd")
 
-    err = capsys.readouterr().err  
+    err = capsys.readouterr().err
     assert "run-2" in err
     assert "WARNING" in err
     assert "something odd" in err
@@ -62,7 +62,7 @@ def test_newline_in_message_cannot_forge_a_log_line(tmp_path):
     LOGGER.info("first\nFAKE LINE")
 
     entries = read_log(tmp_path)
-    assert len(entries) == 1 
+    assert len(entries) == 1
     assert entries[0]["message"] == "first\nFAKE LINE"
 
 
@@ -72,7 +72,7 @@ def test_exception_traceback_is_logged(tmp_path):
     try:
         raise ValueError("boom")
     except ValueError:
-        LOGGER.exception("step failed") 
+        LOGGER.exception("step failed")
 
     entry = read_log(tmp_path)[0]
     assert entry["message"] == "step failed"

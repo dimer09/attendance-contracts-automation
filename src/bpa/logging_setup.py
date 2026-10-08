@@ -5,12 +5,12 @@ import uuid
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from bpa.report import RUN_ID_PATTERN  
+from bpa.report import RUN_ID_PATTERN
 
-PACKAGE_LOGGER = "bpa"  
+PACKAGE_LOGGER = "bpa"
 LOG_FILE_NAME = "bpa.log"
-MAX_LOG_BYTES = 1_000_000  
-BACKUP_COUNT = 5          
+MAX_LOG_BYTES = 1_000_000
+BACKUP_COUNT = 5
 
 
 def generate_run_id(now: dt.datetime | None = None) -> str:
@@ -19,7 +19,6 @@ def generate_run_id(now: dt.datetime | None = None) -> str:
 
 
 class RunIdFilter(logging.Filter):
-
     def __init__(self, run_id: str) -> None:
         super().__init__()
         self.run_id = run_id
@@ -30,14 +29,13 @@ class RunIdFilter(logging.Filter):
 
 
 class JsonFormatter(logging.Formatter):
-
     def format(self, record: logging.LogRecord) -> str:
         payload = {
             "time": dt.datetime.fromtimestamp(record.created).isoformat(timespec="seconds"),
             "level": record.levelname,
             "run_id": getattr(record, "run_id", "-"),
             "logger": record.name,
-            "message": record.getMessage(), 
+            "message": record.getMessage(),
         }
         if record.exc_info:
             payload["exception"] = self.formatException(record.exc_info)
@@ -59,13 +57,12 @@ def setup_logging(run_id: str, log_dir: Path, level: int = logging.INFO) -> None
     if not RUN_ID_PATTERN.fullmatch(run_id):
         raise ValueError(f"Unsafe run id: {run_id!r}")
 
-
     teardown_logging()
 
     log_dir.mkdir(parents=True, exist_ok=True)
     run_filter = RunIdFilter(run_id)
 
-    console = logging.StreamHandler() 
+    console = logging.StreamHandler()
     console.setFormatter(
         logging.Formatter(
             "%(asctime)s %(levelname)-7s [%(run_id)s] %(name)s: %(message)s",

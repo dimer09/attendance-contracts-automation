@@ -64,7 +64,7 @@ def test_report_file_belongs_to_the_run(tmp_path):
     sheet = load_workbook(result.report_path)["Summary"]
     values = {row[0]: row[1] for row in sheet.iter_rows(values_only=True) if row[0]}
     assert values["Source file"] == "attendance.csv"
-    assert values["Result"] == result.verdict 
+    assert values["Result"] == result.verdict
 
 
 @responses.activate
@@ -72,7 +72,7 @@ def test_missing_input_file_fails_before_calling_the_api(tmp_path):
     with pytest.raises(FileReaderError):
         run(tmp_path, input_path=tmp_path / "nope.csv")
 
-    assert len(responses.calls) == 0  
+    assert len(responses.calls) == 0
 
 
 @responses.activate
@@ -83,7 +83,7 @@ def test_api_failure_leaves_no_report(tmp_path):
     with pytest.raises(ApiError):
         run(tmp_path)
 
-    assert not (tmp_path / "reports").exists() 
+    assert not (tmp_path / "reports").exists()
 
 
 @responses.activate
@@ -105,7 +105,7 @@ def test_rules_config_is_applied(tmp_path):
 
     result = run(tmp_path, rules_config=config)
 
-    assert len(result.violations) == 4  
+    assert len(result.violations) == 4
     assert all(v.rule_code != "R4" for v in result.violations)
 
 
@@ -119,7 +119,8 @@ def test_rejected_rows_are_logged_without_personal_names(tmp_path, caplog):
     assert "Rejected row 11" in caplog.text
     assert "Rejected row 12" in caplog.text
     for name in ("Mbuyi", "Kalala", "Tshala", "Ilunga"):
-        assert name not in caplog.text  
+        assert name not in caplog.text
+
 
 @responses.activate
 def test_header_only_file_gives_all_clear(tmp_path):

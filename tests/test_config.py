@@ -15,7 +15,7 @@ def test_override_wins_over_default():
     config = RulesConfig(settings={"R3": RuleSetting(enabled=False)})
 
     assert config.setting_for("R3").enabled is False
-    assert config.setting_for("R1").enabled is True  
+    assert config.setting_for("R1").enabled is True
 
 
 def test_unknown_rule_code_gets_a_safe_default():
@@ -23,10 +23,11 @@ def test_unknown_rule_code_gets_a_safe_default():
     assert setting.enabled is True
     assert setting.severity == Severity.BLOCKING
 
+
 def test_settings_are_read_from_environment():
     settings = load_settings({"BPA_API_URL": " http://api.test ", "BPA_API_KEY": "secret"})
 
-    assert settings.api_base_url == "http://api.test"  
+    assert settings.api_base_url == "http://api.test"
     assert settings.api_key == "secret"
 
 
@@ -52,6 +53,7 @@ def test_api_key_is_hidden_from_repr():
     assert "super-secret" not in repr(settings)
     assert "http://api.test" in repr(settings)
 
+
 SMTP_ENV = {
     "BPA_SMTP_HOST": "smtp.example.com",
     "BPA_MAIL_FROM": "bpa@example.com",
@@ -67,7 +69,7 @@ def test_smtp_minimal_settings_use_safe_defaults():
     settings = load_smtp_settings(smtp_env())
 
     assert settings.host == "smtp.example.com"
-    assert settings.security == "starttls" 
+    assert settings.security == "starttls"
     assert settings.port == 587
     assert settings.sender == "bpa@example.com"
     assert settings.recipients == ("manager@example.com",)
@@ -131,9 +133,7 @@ def test_half_credentials_are_rejected(extra, missing_name):
 
 
 def test_credentials_are_loaded_together():
-    settings = load_smtp_settings(
-        smtp_env(BPA_SMTP_USER="bpa-user", BPA_SMTP_PASSWORD="secret")
-    )
+    settings = load_smtp_settings(smtp_env(BPA_SMTP_USER="bpa-user", BPA_SMTP_PASSWORD="secret"))
 
     assert settings.username == "bpa-user"
     assert settings.password == "secret"

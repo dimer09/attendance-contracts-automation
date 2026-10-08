@@ -1,8 +1,8 @@
 import json
 import os
 import runpy
-import sys
 import smtplib
+import sys
 from pathlib import Path
 
 import pytest
@@ -23,12 +23,12 @@ CONTRACTS = json.loads((SAMPLE_DIR / "contracts.json").read_text())
 
 @pytest.fixture(autouse=True)
 def isolated_environment(tmp_path, monkeypatch):
-  
+
     monkeypatch.chdir(tmp_path)
-   
+
     clean = {k: v for k, v in os.environ.items() if not k.startswith("BPA_")}
     monkeypatch.setattr(os, "environ", clean)
-    monkeypatch.setattr(api_client.time, "sleep", lambda seconds: None)  
+    monkeypatch.setattr(api_client.time, "sleep", lambda seconds: None)
     yield
     teardown_logging()
 
@@ -43,12 +43,18 @@ def serve_contracts():
 
 
 def run_cli(tmp_path, input_path=ATTENDANCE, log_dir=None, extra_args=()):
-    return main([
-        "--input", str(input_path),
-        "--output-dir", str(tmp_path / "reports"),
-        "--log-dir", str(log_dir or tmp_path / "logs"),
-        *extra_args,
-    ])
+    return main(
+        [
+            "--input",
+            str(input_path),
+            "--output-dir",
+            str(tmp_path / "reports"),
+            "--log-dir",
+            str(log_dir or tmp_path / "logs"),
+            *extra_args,
+        ]
+    )
+
 
 @responses.activate
 def test_successful_run_prints_summary_and_exits_0(tmp_path, monkeypatch, capsys):
@@ -58,7 +64,7 @@ def test_successful_run_prints_summary_and_exits_0(tmp_path, monkeypatch, capsys
     code = run_cli(tmp_path)
 
     out = capsys.readouterr().out
-    assert code == 0  
+    assert code == 0
     assert "Exceptions: 6" in out
     assert "Result: ACTION REQUIRED" in out
     assert len(list((tmp_path / "reports").glob("report_*.xlsx"))) == 1
@@ -75,7 +81,8 @@ def test_log_file_holds_the_run_events_with_one_run_id(tmp_path, monkeypatch):
     entries = [json.loads(line) for line in lines]
     assert len({entry["run_id"] for entry in entries}) == 1
     assert any("Report written" in entry["message"] for entry in entries)
-    assert any(entry["level"] == "WARNING" for entry in entries)  
+    assert any(entry["level"] == "WARNING" for entry in entries)
+
 
 def test_missing_input_file_exits_1(tmp_path, monkeypatch, capsys):
     configure(monkeypatch)
@@ -87,14 +94,14 @@ def test_missing_input_file_exits_1(tmp_path, monkeypatch, capsys):
 
 
 def test_missing_configuration_exits_1(tmp_path, monkeypatch, capsys):
-    monkeypatch.setenv("BPA_API_URL", BASE_URL)  
+    monkeypatch.setenv("BPA_API_URL", BASE_URL)
 
     code = run_cli(tmp_path)
 
     err = capsys.readouterr().err
     assert code == 1
     assert "BPA_API_KEY" in err
-    assert "BPA_API_URL" not in err  
+    assert "BPA_API_URL" not in err
 
 
 @responses.activate
@@ -126,7 +133,7 @@ def test_unexpected_error_exits_3_and_traceback_is_logged(tmp_path, monkeypatch,
     def explode(*args, **kwargs):
         raise RuntimeError("boom")
 
-    monkeypatch.setattr(cli, "run_pipeline", explode)  
+    monkeypatch.setattr(cli, "run_pipeline", explode)
 
     code = run_cli(tmp_path)
 
@@ -138,9 +145,9 @@ def test_unexpected_error_exits_3_and_traceback_is_logged(tmp_path, monkeypatch,
 
 def test_invalid_arguments_exit_1_not_2(capsys):
     with pytest.raises(SystemExit) as exit_info:
-        main([])  
+        main([])
 
-    assert exit_info.value.code == 1  
+    assert exit_info.value.code == 1
     assert "--input" in capsys.readouterr().err
 
 
@@ -170,7 +177,7 @@ def test_settings_are_read_from_dotenv_file(tmp_path):
 def test_api_key_never_appears_in_output_or_logs(tmp_path, monkeypatch, capsys):
     configure(monkeypatch, key="super-secret-key")
     for _ in range(3):
-        responses.add(responses.GET, CONTRACTS_URL, status=503)  
+        responses.add(responses.GET, CONTRACTS_URL, status=503)
 
     run_cli(tmp_path)
 
@@ -180,14 +187,16 @@ def test_api_key_never_appears_in_output_or_logs(tmp_path, monkeypatch, capsys):
     assert "super-secret-key" not in captured.err
     assert "super-secret-key" not in log_text
 
+
 def test_module_entry_point_exits_with_the_cli_code(monkeypatch, capsys):
-    monkeypatch.setattr(sys, "argv", ["bpa"])  
+    monkeypatch.setattr(sys, "argv", ["bpa"])
 
     with pytest.raises(SystemExit) as exit_info:
         runpy.run_module("bpa", run_name="__main__")
 
     assert exit_info.value.code == 1
     assert "--input" in capsys.readouterr().err
+
 
 def configure_smtp(monkeypatch, password="smtp-secret"):
     monkeypatch.setenv("BPA_SMTP_HOST", "smtp.example.com")
@@ -232,7 +241,7 @@ def test_failed_notification_does_not_change_the_exit_code(tmp_path, monkeypatch
     code = run_cli(tmp_path, extra_args=["--notify"])
 
     captured = capsys.readouterr()
-    assert code == 0  
+    assert code == 0
     assert "Notification failed" in captured.err
     assert "Result: ACTION REQUIRED" in captured.out
     assert len(list((tmp_path / "reports").glob("report_*.xlsx"))) == 1
@@ -240,20 +249,20 @@ def test_failed_notification_does_not_change_the_exit_code(tmp_path, monkeypatch
 
 @responses.activate
 def test_notify_with_missing_smtp_settings_exits_1_before_any_work(tmp_path, monkeypatch, capsys):
-    configure(monkeypatch)  
+    configure(monkeypatch)
 
     code = run_cli(tmp_path, extra_args=["--notify"])
 
     assert code == 1
     assert "BPA_SMTP_HOST" in capsys.readouterr().err
-    assert len(responses.calls) == 0                
-    assert not (tmp_path / "reports").exists()      
+    assert len(responses.calls) == 0
+    assert not (tmp_path / "reports").exists()
 
 
 @responses.activate
 def test_no_email_is_sent_without_the_notify_flag(tmp_path, monkeypatch):
     configure(monkeypatch)
-    configure_smtp(monkeypatch) 
+    configure_smtp(monkeypatch)
     serve_contracts()
     sent = []
     monkeypatch.setattr(cli, "send_notification", lambda message, settings: sent.append(message))
@@ -273,14 +282,14 @@ def test_smtp_password_never_appears_in_output_or_logs(tmp_path, monkeypatch, ca
     def refuse(*args, **kwargs):
         raise smtplib.SMTPAuthenticationError(535, b"Authentication failed")
 
-    monkeypatch.setattr(notify.smtplib, "SMTP", refuse)  
+    monkeypatch.setattr(notify.smtplib, "SMTP", refuse)
 
     code = run_cli(tmp_path, extra_args=["--notify"])
 
     captured = capsys.readouterr()
     log_text = (tmp_path / "logs" / "bpa.log").read_text(encoding="utf-8")
     assert code == 0
-    assert "Notification failed" in log_text  
+    assert "Notification failed" in log_text
     assert "super-smtp-secret" not in captured.out
     assert "super-smtp-secret" not in captured.err
     assert "super-smtp-secret" not in log_text

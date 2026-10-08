@@ -1,11 +1,11 @@
+import logging
+
 import pytest
 import requests
 import responses
 
 from bpa.extract import api_client
 from bpa.extract.api_client import ApiError, fetch_contracts
-
-import logging
 
 BASE_URL = "http://localhost:8000"
 URL = f"{BASE_URL}/contracts"
@@ -27,7 +27,7 @@ def recorded_sleeps(monkeypatch):
     return delays
 
 
-@responses.activate  
+@responses.activate
 def test_returns_contracts_and_sends_key_and_timeout():
     responses.add(responses.GET, URL, json=[CONTRACT], status=200)
 
@@ -36,13 +36,13 @@ def test_returns_contracts_and_sends_key_and_timeout():
     assert contracts[0].employee_id == "M001"
     request = responses.calls[0].request
     assert request.headers["X-API-Key"] == "secret-key"
-    assert request.req_kwargs["timeout"] == 2.0  
+    assert request.req_kwargs["timeout"] == 2.0
 
 
 @responses.activate
 def test_retries_after_server_error(recorded_sleeps):
-    responses.add(responses.GET, URL, status=500)                
-    responses.add(responses.GET, URL, json=[CONTRACT], status=200)  
+    responses.add(responses.GET, URL, status=500)
+    responses.add(responses.GET, URL, json=[CONTRACT], status=200)
 
     contracts = fetch_contracts(BASE_URL, "key")
 
@@ -51,12 +51,10 @@ def test_retries_after_server_error(recorded_sleeps):
     assert recorded_sleeps == [1.0]
 
 
-@pytest.mark.parametrize(
-    "error", [requests.ConnectionError("down"), requests.Timeout("slow")]
-)
+@pytest.mark.parametrize("error", [requests.ConnectionError("down"), requests.Timeout("slow")])
 @responses.activate
 def test_retries_after_network_error(error):
-    responses.add(responses.GET, URL, body=error) 
+    responses.add(responses.GET, URL, body=error)
     responses.add(responses.GET, URL, json=[CONTRACT], status=200)
 
     assert len(fetch_contracts(BASE_URL, "key")) == 1
@@ -71,7 +69,7 @@ def test_gives_up_after_max_attempts(recorded_sleeps):
         fetch_contracts(BASE_URL, "key", max_attempts=3)
 
     assert len(responses.calls) == 3
-    assert recorded_sleeps == [1.0, 2.0]  
+    assert recorded_sleeps == [1.0, 2.0]
 
 
 @responses.activate
@@ -81,7 +79,7 @@ def test_client_error_is_not_retried(recorded_sleeps):
     with pytest.raises(ApiError, match="HTTP 401"):
         fetch_contracts(BASE_URL, "wrong-key")
 
-    assert len(responses.calls) == 1  
+    assert len(responses.calls) == 1
     assert recorded_sleeps == []
 
 
@@ -109,16 +107,18 @@ def test_non_json_response_is_rejected():
     with pytest.raises(ApiError, match="JSON"):
         fetch_contracts(BASE_URL, "key")
 
+
 @responses.activate
 def test_api_key_never_appears_in_logs(caplog):
-    caplog.set_level(logging.WARNING)  
+    caplog.set_level(logging.WARNING)
     responses.add(responses.GET, URL, status=500)
     responses.add(responses.GET, URL, json=[CONTRACT], status=200)
 
     fetch_contracts(BASE_URL, "test-key")
 
-    assert "Retrying" in caplog.text                
-    assert "super-secret-key" not in caplog.text   
+    assert "Retrying" in caplog.text
+    assert "super-secret-key" not in caplog.text
+
 
 @responses.activate
 def test_contract_that_is_not_an_object_is_rejected():

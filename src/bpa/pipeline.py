@@ -51,11 +51,12 @@ def run_pipeline(
     validation = validate_attendance_rows(read_attendance_file(input_path))
     logger.info(
         "Read %s: %d valid rows, %d rejected",
-        input_path.name, len(validation.valid), len(validation.rejected),
+        input_path.name,
+        len(validation.valid),
+        len(validation.rejected),
     )
     for rejected in validation.rejected:
         logger.warning("Rejected row %d: %s", rejected.row_number, rejected.reason)
-
 
     contracts = fetch_contracts(base_url, api_key)
     logger.info("Fetched %d contracts", len(contracts))
@@ -63,8 +64,6 @@ def run_pipeline(
     matched = match_records_to_contracts(validation.valid, contracts)
     violations = apply_rules(matched, rules_config)
     logger.info("Rules applied: %d exceptions", len(violations))
-
-
 
     report_path = generate_report(
         output_dir,

@@ -1,10 +1,9 @@
-from dataclasses import dataclass, field
-
-from bpa.models import Severity
-
 import os
 import re
 from collections.abc import Mapping
+from dataclasses import dataclass, field
+
+from bpa.models import Severity
 
 
 @dataclass(frozen=True)
@@ -13,11 +12,10 @@ class RuleSetting:
     severity: Severity = Severity.BLOCKING
 
 
-
 DEFAULT_SETTINGS: dict[str, RuleSetting] = {
     "R1": RuleSetting(),
     "R2": RuleSetting(),
-    "R3": RuleSetting(severity=Severity.WARNING),  
+    "R3": RuleSetting(severity=Severity.WARNING),
     "R4": RuleSetting(),
     "R5": RuleSetting(),
 }
@@ -39,8 +37,6 @@ class ConfigError(Exception):
 
 @dataclass(frozen=True)
 class Settings:
-
-
     api_base_url: str
     api_key: str = field(repr=False)
 
@@ -60,7 +56,6 @@ def load_settings(environ: Mapping[str, str] | None = None) -> Settings:
     )
 
 
-
 EMAIL_PATTERN = re.compile(r"[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]+")
 SMTP_SECURITY_MODES = ("starttls", "ssl", "none")
 DEFAULT_SMTP_PORTS = {"starttls": 587, "ssl": 465, "none": 25}
@@ -69,11 +64,9 @@ LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
 
 @dataclass(frozen=True)
 class SmtpSettings:
- 
-
     host: str
     port: int
-    security: str 
+    security: str
     sender: str
     recipients: tuple[str, ...]
     username: str | None = None
@@ -103,7 +96,6 @@ def load_smtp_settings(environ: Mapping[str, str] | None = None) -> SmtpSettings
 
     host = _value(environ, "BPA_SMTP_HOST")
     if security == "none" and host.lower() not in LOCAL_HOSTS:
-       
         raise ConfigError("BPA_SMTP_SECURITY=none is only allowed for a local host")
 
     port_text = _value(environ, "BPA_SMTP_PORT")

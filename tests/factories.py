@@ -1,4 +1,3 @@
-
 from bpa.models import AttendanceRecord, Contract
 
 
