@@ -3,10 +3,9 @@
 import json
 import os
 import secrets
-
-from fastapi import Depends, FastAPI, HTTPException, Header
-
 from pathlib import Path
+
+from fastapi import Depends, FastAPI, Header, HTTPException
 
 DATA_FILE = Path(__file__).parent.parent / "data" / "sample" / "contracts.json"
 

@@ -1,8 +1,8 @@
 import json
 import os
 import runpy
-import sys
 import smtplib
+import sys
 from pathlib import Path
 
 import pytest

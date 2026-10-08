@@ -1,11 +1,11 @@
+import logging
+
 import pytest
 import requests
 import responses
 
 from bpa.extract import api_client
 from bpa.extract.api_client import ApiError, fetch_contracts
-
-import logging
 
 BASE_URL = "http://localhost:8000"
 URL = f"{BASE_URL}/contracts"

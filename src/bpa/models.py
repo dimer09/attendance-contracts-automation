@@ -1,8 +1,10 @@
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
-from enum import Enum
 import datetime as dt
 from dataclasses import dataclass
+from enum import Enum
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
 
 class AttendanceRecord(BaseModel):
 

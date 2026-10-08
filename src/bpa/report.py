@@ -12,7 +12,6 @@ from openpyxl.worksheet.worksheet import Worksheet
 from bpa.models import RuleViolation, Severity
 from bpa.validate import RejectedRow
 
-
 RUN_ID_PATTERN = re.compile(r"[A-Za-z0-9_-]+")
 
 HEADER_FILL = PatternFill("solid", fgColor="1F3864")
@@ -41,7 +40,7 @@ def _set(sheet: Worksheet, row: int, column: int, value, number_format: str | No
 
 
 def _write_header(sheet: Worksheet, headers: list[str], widths: list[int]) -> None:
-    for column, (title, width) in enumerate(zip(headers, widths), start=1):
+    for column, (title, width) in enumerate(zip(headers, widths, strict=True), start=1):
         cell = _set(sheet, 1, column, title)
         cell.fill = HEADER_FILL
         cell.font = HEADER_FONT

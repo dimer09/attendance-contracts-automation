@@ -1,12 +1,10 @@
-import requests
 import logging
 import time
 
+import requests
 from pydantic import ValidationError
 
-
 from bpa.models import Contract
-
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +16,7 @@ def _parse_contact(response: requests.Response) -> list[Contract]:
     try:
         data = response.json()
     except ValueError as e:
-        raise ApiError(f"Invalid JSON response: {e}")
+        raise ApiError(f"Invalid JSON response: {e}") from e
 
     if not isinstance(data, list):
         raise ApiError(f"Expected a list of contracts, got: {type(data).__name__}")

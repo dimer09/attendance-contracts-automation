@@ -5,7 +5,7 @@ import uuid
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from bpa.report import RUN_ID_PATTERN  
+from bpa.report import RUN_ID_PATTERN
 
 PACKAGE_LOGGER = "bpa"  
 LOG_FILE_NAME = "bpa.log"

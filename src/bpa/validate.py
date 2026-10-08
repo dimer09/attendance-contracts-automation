@@ -6,6 +6,7 @@ from pydantic import ValidationError
 
 from bpa.models import AttendanceRecord
 
+
 @dataclass(frozen=True)
 class RejectedRow:
     row_number : int

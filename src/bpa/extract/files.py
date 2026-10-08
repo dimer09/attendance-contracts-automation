@@ -1,6 +1,6 @@
 
-from pathlib import Path
 import datetime as dt
+from pathlib import Path
 
 import pandas as pd
 
@@ -40,7 +40,7 @@ def read_attendance_file(path: Path) -> list[dict[str, str]]:
         elif path.suffix.lower() == ".xlsx":
             df = pd.read_excel(path, dtype=object, keep_default_na=False)
     except(pd.errors.EmptyDataError, pd.errors.ParserError, ValueError) as e:
-        raise FileReaderError(f"Error reading file {path}: {e}")
+        raise FileReaderError(f"Error reading file {path}: {e}") from e
 
     df.columns = [str(col).strip().lower() for col in df.columns]
 

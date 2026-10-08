@@ -1,10 +1,11 @@
-from bpa.models import AttendanceRecord, Contract, ContractStatus
+import json
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
-import json
-from pathlib import Path
+from bpa.models import AttendanceRecord, Contract, ContractStatus
+
 
 def make_data(**overrides):
     base = {

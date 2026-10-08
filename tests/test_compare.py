@@ -5,7 +5,6 @@ from bpa.compare import match_records_to_contracts
 from bpa.extract.files import read_attendance_file
 from bpa.models import Contract
 from bpa.validate import validate_attendance_rows
-
 from tests.factories import make_contract, make_record
 
 SAMPLE_DIR = Path(__file__).parent.parent / "data" / "sample"

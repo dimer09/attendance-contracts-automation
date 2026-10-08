@@ -1,8 +1,9 @@
 
-from dataclasses import dataclass
 from collections import defaultdict
+from dataclasses import dataclass
 
 from bpa.models import AttendanceRecord, Contract
+
 
 @dataclass(frozen = True)
 class MatchRecord :

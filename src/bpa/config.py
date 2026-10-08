@@ -1,10 +1,9 @@
-from dataclasses import dataclass, field
-
-from bpa.models import Severity
-
 import os
 import re
 from collections.abc import Mapping
+from dataclasses import dataclass, field
+
+from bpa.models import Severity
 
 
 @dataclass(frozen=True)
