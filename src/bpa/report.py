@@ -17,12 +17,21 @@ RUN_ID_PATTERN = re.compile(r"[A-Za-z0-9_-]+")
 HEADER_FILL = PatternFill("solid", fgColor="1F3864")
 HEADER_FONT = Font(bold=True, color="FFFFFF")
 SEVERITY_FILLS = {
-    Severity.BLOCKING: PatternFill("solid", fgColor="F8CBAD"),  
-    Severity.WARNING: PatternFill("solid", fgColor="FFE699"),   
+    Severity.BLOCKING: PatternFill("solid", fgColor="F8CBAD"),
+    Severity.WARNING: PatternFill("solid", fgColor="FFE699"),
 }
 DATE_FORMAT = "yyyy-mm-dd"
 
-EXCEPTION_HEADERS = ["Rule", "Severity", "Employee ID", "Name", "Client", "Date", "Hours", "Message"]
+EXCEPTION_HEADERS = [
+    "Rule",
+    "Severity",
+    "Employee ID",
+    "Name",
+    "Client",
+    "Date",
+    "Hours",
+    "Message",
+]
 EXCEPTION_WIDTHS = [8, 12, 14, 20, 18, 12, 8, 70]
 
 REJECTED_HEADERS = ["File row", "Employee ID", "Name", "Client", "Date", "Hours", "Reason"]
@@ -45,7 +54,7 @@ def _write_header(sheet: Worksheet, headers: list[str], widths: list[int]) -> No
         cell.fill = HEADER_FILL
         cell.font = HEADER_FONT
         sheet.column_dimensions[get_column_letter(column)].width = width
-    sheet.freeze_panes = "A2"  
+    sheet.freeze_panes = "A2"
 
 
 def result_label(blocking: int, warnings: int, rejected_count: int) -> str:
@@ -78,7 +87,7 @@ def _write_summary(
         ("Lines read", valid_count + len(rejected)),
         ("Valid lines", valid_count),
         ("Rejected lines", len(rejected)),
-        ("Exceptions", len(violations)), 
+        ("Exceptions", len(violations)),
         ("Blocking exceptions", blocking),
         ("Warnings", warnings),
         None,
@@ -93,7 +102,7 @@ def _write_summary(
             _set(sheet, row, 2, value)
         row += 1
 
-    row += 1  
+    row += 1
     _set(sheet, row, 1, "Exceptions by rule").font = Font(bold=True)
     per_rule = Counter(violation.rule_code for violation in violations)
     for code in sorted(per_rule):
@@ -115,14 +124,16 @@ def _write_exceptions(sheet: Worksheet, violations: list[RuleViolation]) -> None
             record.employee_id,
             record.name,
             record.client,
-            record.date,  
-            record.hours,  
+            record.date,
+            record.hours,
             violation.message,
         ]
         for column, value in enumerate(values, start=1):
-            cell = _set(sheet, row, column, value, DATE_FORMAT if isinstance(value, dt.date) else None)
+            cell = _set(
+                sheet, row, column, value, DATE_FORMAT if isinstance(value, dt.date) else None
+            )
             cell.fill = SEVERITY_FILLS[violation.severity]
-    sheet.auto_filter.ref = sheet.dimensions  
+    sheet.auto_filter.ref = sheet.dimensions
 
 
 def _write_rejected(sheet: Worksheet, rejected: list[RejectedRow]) -> None:
@@ -165,6 +176,6 @@ def generate_report(
     _write_rejected(workbook.create_sheet("Rejected rows"), rejected)
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    path = output_dir / f"report_{run_id}.xlsx"  
+    path = output_dir / f"report_{run_id}.xlsx"
     workbook.save(path)
     return path

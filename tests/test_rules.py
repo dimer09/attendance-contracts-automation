@@ -26,8 +26,8 @@ def codes(violations):
 def test_unknown_employee_is_flagged_r1():
     violations = run(make_record(employee_id="M999"))
 
-    assert codes(violations) == ["R1"]  
-    assert violations[0].severity == Severity.BLOCKING  
+    assert codes(violations) == ["R1"]
+    assert violations[0].severity == Severity.BLOCKING
     assert "M999" in violations[0].message
 
 
@@ -52,8 +52,8 @@ def test_record_before_contract_start_is_flagged_r2():
 
 def test_contract_boundaries_are_inclusive():
     contract = make_contract(start_date="2026-10-05", end_date="2026-10-07")
-    assert run(make_record(date="2026-10-05"), contract) == [] 
-    assert run(make_record(date="2026-10-07"), contract) == []  
+    assert run(make_record(date="2026-10-05"), contract) == []
+    assert run(make_record(date="2026-10-07"), contract) == []
 
 
 def test_other_client_contract_is_flagged_r5_only():
@@ -105,26 +105,26 @@ def test_sample_data_end_to_end():
 
     violations = apply_rules(match_records_to_contracts(result.valid, contracts))
 
-    found = {
-        (v.record.employee_id, v.record.date.isoformat(), v.rule_code) for v in violations
-    }
+    found = {(v.record.employee_id, v.record.date.isoformat(), v.rule_code) for v in violations}
     assert found == {
-        ("M001", "2026-10-06", "R4"),  
-        ("M002", "2026-10-05", "R2"),  
-        ("M003", "2026-10-05", "R5"),  
-        ("M003", "2026-10-06", "R3"),  
-        ("M999", "2026-10-05", "R1"),  
+        ("M001", "2026-10-06", "R4"),
+        ("M002", "2026-10-05", "R2"),
+        ("M003", "2026-10-05", "R5"),
+        ("M003", "2026-10-06", "R3"),
+        ("M999", "2026-10-05", "R1"),
     }
-    assert len(violations) == 6 
+    assert len(violations) == 6
+
 
 def run_many(records, contracts):
     return apply_rules(match_records_to_contracts(records, contracts))
+
 
 def test_hours_over_limit_is_flagged_r3_as_warning():
     violations = run(make_record(hours="11"), make_contract(max_daily_hours=8))
 
     assert codes(violations) == ["R3"]
-    assert violations[0].severity == Severity.WARNING  
+    assert violations[0].severity == Severity.WARNING
     assert "11" in violations[0].message and "8" in violations[0].message
 
 
@@ -134,7 +134,6 @@ def test_hours_equal_to_limit_are_accepted():
 
 def test_r3_is_silent_without_applicable_contract():
     expired = make_contract(end_date="2026-09-30", max_daily_hours=8)
-
 
     assert codes(run(make_record(hours="20"), expired)) == ["R2"]
 
@@ -152,7 +151,7 @@ def test_limit_of_inactive_contract_is_ignored():
 
     violations = run(make_record(hours="10", date="2026-10-05"), expired, active)
 
-    assert codes(violations) == ["R3"] 
+    assert codes(violations) == ["R3"]
 
 
 def test_duplicate_lines_are_flagged_r4_on_each_occurrence():
@@ -179,4 +178,4 @@ def test_duplicate_is_flagged_even_without_contract():
 
     violations = run_many(records, [])
 
-    assert codes(violations) == ["R1", "R4", "R1", "R4"]  
+    assert codes(violations) == ["R1", "R4", "R1", "R4"]

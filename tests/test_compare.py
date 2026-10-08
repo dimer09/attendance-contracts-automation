@@ -10,9 +10,6 @@ from tests.factories import make_contract, make_record
 SAMPLE_DIR = Path(__file__).parent.parent / "data" / "sample"
 
 
-
-
-
 def test_record_is_matched_with_its_contract():
     contract = make_contract()
 
@@ -22,11 +19,9 @@ def test_record_is_matched_with_its_contract():
 
 
 def test_unknown_employee_has_no_contracts():
-    matched = match_records_to_contracts(
-        [make_record(employee_id="M999")], [make_contract()]
-    )
+    matched = match_records_to_contracts([make_record(employee_id="M999")], [make_contract()])
 
-    assert matched[0].contracts == ()  
+    assert matched[0].contracts == ()
 
 
 def test_employee_with_several_contracts_gets_all_of_them():
@@ -35,7 +30,7 @@ def test_employee_with_several_contracts_gets_all_of_them():
 
     matched = match_records_to_contracts([make_record()], [first, second])
 
-    assert matched[0].contracts == (first, second)  
+    assert matched[0].contracts == (first, second)
 
 
 def test_records_keep_their_order():
@@ -62,8 +57,8 @@ def test_sample_data_end_to_end():
 
     matched = match_records_to_contracts(result.valid, contracts)
 
-    assert len(matched) == 10  
+    assert len(matched) == 10
     unknown = [item for item in matched if not item.contracts]
-    assert [item.record.employee_id for item in unknown] == ["M999"]  
+    assert [item.record.employee_id for item in unknown] == ["M999"]
     m001 = [item for item in matched if item.record.employee_id == "M001"]
     assert all(len(item.contracts) == 1 for item in m001)

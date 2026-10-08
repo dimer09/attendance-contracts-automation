@@ -14,16 +14,16 @@ from bpa.notify import NotificationError, build_message, send_notification
 from bpa.pipeline import PipelineResult, run_pipeline
 
 EXIT_OK = 0
-EXIT_INPUT_ERROR = 1  
-EXIT_API_ERROR = 2    
-EXIT_UNEXPECTED = 3 
+EXIT_INPUT_ERROR = 1
+EXIT_API_ERROR = 2
+EXIT_UNEXPECTED = 3
 
 logger = logging.getLogger(__name__)
 
 
 class _Parser(argparse.ArgumentParser):
     def error(self, message: str) -> NoReturn:
-       
+
         self.print_usage(sys.stderr)
         self.exit(EXIT_INPUT_ERROR, f"{self.prog}: error: {message}\n")
 
@@ -35,15 +35,20 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--input", required=True, type=Path, help="timesheet file (.csv or .xlsx)")
     parser.add_argument(
-        "--output-dir", type=Path, default=Path("reports"),
+        "--output-dir",
+        type=Path,
+        default=Path("reports"),
         help="folder for the Excel report (default: reports)",
     )
     parser.add_argument(
-        "--log-dir", type=Path, default=Path("logs"),
+        "--log-dir",
+        type=Path,
+        default=Path("logs"),
         help="folder for the log file (default: logs)",
     )
     parser.add_argument(
-        "--notify", action="store_true",
+        "--notify",
+        action="store_true",
         help="email the report (needs the BPA_SMTP_* and BPA_MAIL_* variables)",
     )
     return parser
@@ -62,21 +67,21 @@ def _print_summary(result: PipelineResult) -> None:
     )
     print(f"Result: {result.verdict}")
 
+
 def _notify(result: PipelineResult, smtp: SmtpSettings) -> None:
-  
+
     try:
         send_notification(build_message(result, smtp), smtp)
     except NotificationError as exc:
-      
         logger.error("Notification failed: %s", exc)
     else:
-
         logger.info("Notification sent to %d recipient(s)", len(smtp.recipients))
+
 
 def _run(args: argparse.Namespace, run_id: str) -> int:
     try:
         settings = load_settings()
-       
+
         smtp = load_smtp_settings() if args.notify else None
         result = run_pipeline(
             args.input,
@@ -116,11 +121,10 @@ def main(argv: list[str] | None = None) -> int:
     try:
         setup_logging(run_id, args.log_dir)
     except OSError as exc:
-        
         print(f"Cannot set up logging in {args.log_dir}: {exc}", file=sys.stderr)
         return EXIT_UNEXPECTED
 
     try:
         return _run(args, run_id)
     finally:
-        teardown_logging()  
+        teardown_logging()

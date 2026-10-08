@@ -66,12 +66,14 @@ def test_summary_shows_counts_and_rule_breakdown(tmp_path):
         make_violation("R3", Severity.WARNING),
     ]
 
-    summary = summary_of(build(tmp_path, valid_count=5, violations=violations, rejected=[make_rejected()]))
+    summary = summary_of(
+        build(tmp_path, valid_count=5, violations=violations, rejected=[make_rejected()])
+    )
 
     assert summary["Run ID"] == RUN_ID
     assert summary["Source file"] == "attendance.csv"
     assert summary["Generated at"] == "2026-10-06T14:30:00"
-    assert summary["Lines read"] == 6      
+    assert summary["Lines read"] == 6
     assert summary["Valid lines"] == 5
     assert summary["Rejected lines"] == 1
     assert summary["Exceptions"] == 3
@@ -88,11 +90,29 @@ def test_exceptions_sheet_has_values_and_severity_colors(tmp_path):
     sheet = load_workbook(build(tmp_path, violations=violations))["Exceptions"]
 
     headers = [cell.value for cell in sheet[1]]
-    assert headers == ["Rule", "Severity", "Employee ID", "Name", "Client", "Date", "Hours", "Message"]
+    assert headers == [
+        "Rule",
+        "Severity",
+        "Employee ID",
+        "Name",
+        "Client",
+        "Date",
+        "Hours",
+        "Message",
+    ]
     first = [cell.value for cell in sheet[2]]
-    assert first == ["R1", "blocking", "M001", "Mbuyi", "Acme", dt.datetime(2026, 10, 5), 8, "R1 problem"]
-    assert sheet["A2"].fill.fgColor.rgb.endswith("F8CBAD") 
-    assert sheet["A3"].fill.fgColor.rgb.endswith("FFE699") 
+    assert first == [
+        "R1",
+        "blocking",
+        "M001",
+        "Mbuyi",
+        "Acme",
+        dt.datetime(2026, 10, 5),
+        8,
+        "R1 problem",
+    ]
+    assert sheet["A2"].fill.fgColor.rgb.endswith("F8CBAD")
+    assert sheet["A3"].fill.fgColor.rgb.endswith("FFE699")
     assert sheet.freeze_panes == "A2"
 
 
@@ -100,7 +120,15 @@ def test_rejected_sheet_keeps_original_values_and_reason(tmp_path):
     sheet = load_workbook(build(tmp_path, rejected=[make_rejected(row_number=12)]))["Rejected rows"]
 
     row = [cell.value for cell in sheet[2]]
-    assert row == [12, "M001", "Mbuyi", "Acme", "2026-10-07", "-3", "hours: Input should be greater than 0"]
+    assert row == [
+        12,
+        "M001",
+        "Mbuyi",
+        "Acme",
+        "2026-10-07",
+        "-3",
+        "hours: Input should be greater than 0",
+    ]
 
 
 def test_text_starting_with_equals_stays_text(tmp_path):
@@ -110,7 +138,7 @@ def test_text_starting_with_equals_stays_text(tmp_path):
     cell = load_workbook(path)["Exceptions"]["D2"]
 
     assert cell.value == "=1+1"
-    assert cell.data_type == "s"  
+    assert cell.data_type == "s"
 
 
 def test_empty_report_has_headers_only(tmp_path):
@@ -124,8 +152,12 @@ def test_empty_report_has_headers_only(tmp_path):
 def test_unsafe_run_id_is_rejected(tmp_path, bad_run_id):
     with pytest.raises(ValueError, match="Unsafe run id"):
         generate_report(
-            tmp_path, run_id=bad_run_id, source_name="x.csv",
-            valid_count=0, violations=[], rejected=[],
+            tmp_path,
+            run_id=bad_run_id,
+            source_name="x.csv",
+            valid_count=0,
+            violations=[],
+            rejected=[],
         )
 
 
@@ -133,8 +165,12 @@ def test_missing_output_directory_is_created(tmp_path):
     target = tmp_path / "out" / "reports"
 
     path = generate_report(
-        target, run_id=RUN_ID, source_name="x.csv",
-        valid_count=0, violations=[], rejected=[],
+        target,
+        run_id=RUN_ID,
+        source_name="x.csv",
+        valid_count=0,
+        violations=[],
+        rejected=[],
     )
 
     assert path.parent == target
@@ -147,7 +183,7 @@ def test_missing_output_directory_is_created(tmp_path):
         ([], [], "ALL CLEAR"),
         ([make_violation("R3", Severity.WARNING)], [], "REVIEW RECOMMENDED"),
         ([make_violation("R1")], [], "ACTION REQUIRED"),
-        ([], [make_rejected()], "ACTION REQUIRED"),  
+        ([], [make_rejected()], "ACTION REQUIRED"),
     ],
 )
 def test_result_reflects_what_was_found(tmp_path, violations, rejected, expected):
@@ -164,9 +200,13 @@ def test_sample_data_end_to_end(tmp_path):
     violations = apply_rules(match_records_to_contracts(result.valid, contracts))
 
     path = generate_report(
-        tmp_path, run_id="sample", source_name="attendance.csv",
-        valid_count=len(result.valid), violations=violations,
-        rejected=result.rejected, generated_at=GENERATED_AT,
+        tmp_path,
+        run_id="sample",
+        source_name="attendance.csv",
+        valid_count=len(result.valid),
+        violations=violations,
+        rejected=result.rejected,
+        generated_at=GENERATED_AT,
     )
 
     summary = summary_of(path)
